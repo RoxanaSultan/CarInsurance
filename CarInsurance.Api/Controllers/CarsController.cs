@@ -30,4 +30,18 @@ public class CarsController(CarService service) : ControllerBase
             return NotFound();
         }
     }
+
+    [HttpPost("cars/{carId}/claims")]
+    public async Task<ActionResult> FileClaim(long carId, [FromBody] ClaimDto claimDto)
+    {
+        try
+        {
+            await _service.FileClaimAsync(carId, claimDto);
+            return Ok($"Claim filed for car with id: {carId}.");
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
 }

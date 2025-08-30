@@ -27,4 +27,21 @@ public class CarService(AppDbContext db)
             (p.EndDate == null || p.EndDate >= date)
         );
     }
+
+    public async Task FileClaimAsync(long carId, ClaimDto claimDto)
+    {
+        var car = await _db.Cars.FindAsync(carId);
+        if (car == null) throw new KeyNotFoundException($"Car {carId} not found");
+
+        var claim = new Models.Claim
+        {
+            CarId = carId,
+            ClaimDate = claimDto.ClaimDate,
+            Description = claimDto.Description,
+            Amount = claimDto.Amount
+        };
+
+        _db.Claims.Add(claim);
+        await _db.SaveChangesAsync();
+    }
 }

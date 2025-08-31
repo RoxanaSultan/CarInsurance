@@ -1,6 +1,7 @@
 using CarInsurance.Api.Data;
 using CarInsurance.Api.Dtos;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace CarInsurance.Api.Services;
 
@@ -43,5 +44,37 @@ public class CarService(AppDbContext db)
 
         _db.Claims.Add(claim);
         await _db.SaveChangesAsync();
+    }
+
+    public async Task<List<CarHistoryDto>> GetCarHistoryAsync(long carId)
+    {
+        var car = await _db.Cars.FindAsync(carId);
+        if (car == null)
+            throw new KeyNotFoundException($"Car {carId} not found");
+
+        var policies = await _db.Policies
+            .Where(p => p.CarId == carId)
+            .Select(p => new PolicyHistoryDto(
+                p.StartDate,
+                p.EndDate,
+                p.Provider
+            ))
+            .Cast<CarHistoryDto>()
+            .ToListAsync();
+
+        var claims = await _db.Claims
+            .Where(c => c.CarId == carId)
+            .Select(c => new ClaimHistoryDto(
+                c.ClaimDate,
+                c.Description,
+                c.Amount
+            ))
+            .Cast<CarHistoryDto>()
+            .ToListAsync();
+
+        return policies
+            .Concat(claims)
+            .OrderBy(e => e.SortDate)
+            .ToList(); ;
     }
 }
